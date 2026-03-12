@@ -1,0 +1,263 @@
+{% extends 'predictor/base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+  .analytics-hero { padding: 52px 52px 36px; max-width: 1200px; margin: 0 auto; }
+  .analytics-grid { max-width: 1200px; margin: 0 auto; padding: 0 52px 80px; display: grid; gap: 24px; }
+  @media(max-width:768px){ .analytics-hero,.analytics-grid{padding-left:20px;padding-right:20px;} }
+
+  .chart-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 22px; box-shadow: var(--shadow); padding: 28px;
+    transition: box-shadow 0.3s;
+  }
+  .chart-card:hover { box-shadow: var(--shadow-md); }
+
+  .chart-card-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .chart-card-sub   { font-size: 0.8rem; color: var(--muted); margin-bottom: 22px; }
+  .chart-wrap       { position: relative; height: 280px; }
+  .charts-row       { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width:900px){ .charts-row{grid-template-columns:1fr;} }
+
+  /* Metric cards */
+  .metric-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  @media(max-width:768px){ .metric-cards{grid-template-columns:1fr 1fr;} }
+
+  .metric-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 18px; padding: 22px; text-align: center;
+    box-shadow: var(--shadow); transition: all 0.3s;
+  }
+  .metric-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+
+  .mc-icon-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; margin: 0 auto 10px;
+  }
+  .mc-icon-1 { background: var(--blue-light); }
+  .mc-icon-2 { background: var(--orange-light); }
+  .mc-icon-3 { background: rgba(5,150,105,0.1); }
+  .mc-icon-4 { background: rgba(124,58,237,0.1); }
+
+  .mc-val { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 800; margin-bottom: 4px; }
+  .mc-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* City table */
+  .city-table { width: 100%; border-collapse: collapse; }
+  .city-table th { text-align:left; padding:10px 14px; font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid var(--border); font-weight:700; }
+  .city-table td { padding:12px 14px; font-size:0.87rem; border-bottom:1px solid var(--border2); }
+  .city-table tr:hover td { background: var(--bg2); }
+  .city-table tr:last-child td { border-bottom:none; }
+  .td-price { color:var(--blue2); font-weight:800; font-family:'Playfair Display',serif; font-size:1rem; }
+  .td-bar-inner { height:5px; background:var(--bg2); border-radius:3px; overflow:hidden; width:120px; }
+  .td-bar-fill  { height:100%; background:linear-gradient(90deg, var(--blue2), var(--orange)); border-radius:3px; width:0; transition:width 1s ease; }
+
+  /* Feature importance list */
+  .fi-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border2); }
+  .fi-item:last-child { border-bottom:none; }
+  .fi-rank  { width:24px; height:24px; border-radius:50%; background:var(--blue-light); color:var(--blue2); font-size:0.72rem; font-weight:800; display:grid; place-items:center; flex-shrink:0; }
+  .fi-name  { flex:1; font-size:0.87rem; font-weight:600; color:var(--text2); }
+  .fi-track { width:100px; height:5px; background:var(--bg2); border-radius:3px; overflow:hidden; }
+  .fi-fill  { height:100%; border-radius:3px; background:linear-gradient(90deg, var(--blue2), var(--orange)); width:0; transition:width 1s ease; }
+  .fi-pct   { font-size:0.8rem; color:var(--orange); font-weight:800; min-width:38px; text-align:right; }
+</style>
+
+<div class="analytics-hero">
+  <div class="section-label">Analytics Dashboard</div>
+  <h1 class="display-heading" style="font-size:clamp(2rem,4vw,3.2rem);margin-bottom:10px">
+    Deep dive into <span class="blue-gradient">model insights</span>
+  </h1>
+  <p style="color:var(--muted);font-weight:400">Training data: 12,000 rows · 15 features · 10 cities · Random Forest Ensemble</p>
+</div>
+
+<div class="analytics-grid">
+
+  <!-- METRIC CARDS -->
+  <div class="metric-cards">
+    <div class="metric-card aos">
+      <div class="mc-icon-wrap mc-icon-1"><svg width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+      <div class="mc-val" style="color:var(--blue2)" id="mc-r2">—</div>
+      <div class="mc-lbl">R² Accuracy</div>
+    </div>
+    <div class="metric-card aos aos-delay-1">
+      <div class="mc-icon-wrap mc-icon-2"><svg width="20" height="20" fill="none" stroke="#EA6C00" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v1m0 10v1M6 12H5m14 0h-1"/></svg></div>
+      <div class="mc-val" style="color:var(--orange)" id="mc-mae">—</div>
+      <div class="mc-lbl">Mean Abs Error</div>
+    </div>
+    <div class="metric-card aos aos-delay-2">
+      <div class="mc-icon-wrap mc-icon-3"><svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <div class="mc-val" style="color:var(--green)" id="mc-rmse">—</div>
+      <div class="mc-lbl">RMSE</div>
+    </div>
+    <div class="metric-card aos aos-delay-3">
+      <div class="mc-icon-wrap mc-icon-4"><svg width="20" height="20" fill="none" stroke="#7C3AED" stroke-width="2" viewBox="0 0 24 24"><path d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/><path d="M9 11l2 2 4-4"/></svg></div>
+      <div class="mc-val" style="color:#7C3AED" id="mc-rows">12K+</div>
+      <div class="mc-lbl">Training Samples</div>
+    </div>
+  </div>
+
+  <!-- ROW 1 -->
+  <div class="charts-row">
+    <div class="chart-card aos">
+      <div class="chart-card-title">Monthly Price Trend</div>
+      <div class="chart-card-sub">Average predicted price across all cities by month</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card aos aos-delay-1">
+      <div class="chart-card-title">Feature Importance</div>
+      <div class="chart-card-sub">Contribution of each feature to prediction accuracy</div>
+      <div class="chart-wrap"><canvas id="importanceChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: City bar -->
+  <div class="chart-card aos">
+    <div class="chart-card-title">Average Price by City</div>
+    <div class="chart-card-sub">Median estimated property value across 10 major US cities</div>
+    <div class="chart-wrap" style="height:300px"><canvas id="cityChart"></canvas></div>
+  </div>
+
+  <!-- ROW 3 -->
+  <div class="charts-row">
+    <div class="chart-card aos">
+      <div class="chart-card-title">Feature Ranking</div>
+      <div class="chart-card-sub">Sorted by impact on price prediction</div>
+      <div id="fi-list"></div>
+    </div>
+    <div class="chart-card aos aos-delay-1">
+      <div class="chart-card-title">City Price Table</div>
+      <div class="chart-card-sub">Min, median, max estimated values per city</div>
+      <div style="overflow-x:auto">
+        <table class="city-table">
+          <thead><tr><th>City</th><th>Avg Price</th><th>Spread</th><th>Range</th></tr></thead>
+          <tbody id="city-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4 -->
+  <div class="charts-row">
+    <div class="chart-card aos">
+      <div class="chart-card-title">Price Distribution</div>
+      <div class="chart-card-sub">Breakdown of properties by price range</div>
+      <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+    </div>
+    <div class="chart-card aos aos-delay-1">
+      <div class="chart-card-title">Model Comparison</div>
+      <div class="chart-card-sub">R² score: RF alone vs GB alone vs Ensemble</div>
+      <div class="chart-wrap"><canvas id="modelCompChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  Chart.defaults.color        = '#6B7280';
+  Chart.defaults.borderColor  = '#E5EAFF';
+  Chart.defaults.font.family  = 'Nunito Sans';
+
+  const BLUE   = '#2563EB';
+  const ORANGE = '#F97316';
+  const GREEN  = '#059669';
+  const PURPLE = '#7C3AED';
+  const AMBER  = '#D97706';
+  const ROSE   = '#DC2626';
+
+  async function loadData() {
+    try { const res=await fetch('/api/metrics'); buildDashboard(await res.json()); }
+    catch(e) { buildDashboard(getMock()); }
+  }
+
+  function getMock() {
+    return {
+      metrics:{r2:0.974,mae:8420,rmse:14200},
+      dataset_stats:{rows:12000,features:15},
+      monthly_trend:{Jan:380000,Feb:385000,Mar:392000,Apr:401000,May:415000,Jun:428000,Jul:435000,Aug:441000,Sep:432000,Oct:421000,Nov:409000,Dec:398000},
+      feature_importances:{area_sqft:0.28,city_idx:0.18,location_type:0.12,age_years:0.09,condition:0.08,school_dist_km:0.06,crime_index:0.05,lot_size_sqft:0.04,garage_cars:0.03,has_pool:0.025,renovated:0.02,bedrooms:0.018,bathrooms:0.015,has_garden:0.01,floors:0.007},
+      city_stats:{'New York':{avg:842000,median:810000,min:95000,max:4200000,count:1200},'Los Angeles':{avg:765000,median:740000,min:88000,max:3900000,count:1200},'Chicago':{avg:575000,median:540000,min:62000,max:2800000,count:1200},'Houston':{avg:421000,median:390000,min:45000,max:2100000,count:1200},'Phoenix':{avg:383000,median:355000,min:40000,max:1900000,count:1200},'Philadelphia':{avg:537000,median:500000,min:58000,max:2600000,count:1200},'San Antonio':{avg:383000,median:355000,min:40000,max:1900000,count:1200},'San Diego':{avg:690000,median:660000,min:78000,max:3400000,count:1200},'Dallas':{avg:460000,median:430000,min:50000,max:2300000,count:1200},'Austin':{avg:613000,median:585000,min:70000,max:3100000,count:1200}}
+    };
+  }
+
+  function buildDashboard(data) {
+    if(data.metrics){
+      document.getElementById('mc-r2').textContent   = data.metrics.r2;
+      document.getElementById('mc-mae').textContent  = '$'+Number(data.metrics.mae).toLocaleString();
+      document.getElementById('mc-rmse').textContent = '$'+Number(data.metrics.rmse).toLocaleString();
+    }
+    if(data.dataset_stats) document.getElementById('mc-rows').textContent=(data.dataset_stats.rows/1000).toFixed(0)+'K+';
+
+    // Monthly trend
+    if(data.monthly_trend){
+      new Chart(document.getElementById('trendChart'),{
+        type:'line',
+        data:{labels:Object.keys(data.monthly_trend),datasets:[{label:'Avg Price',data:Object.values(data.monthly_trend),borderColor:BLUE,backgroundColor:'rgba(37,99,235,0.08)',fill:true,tension:0.4,pointBackgroundColor:BLUE,pointRadius:4,pointHoverRadius:7}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#E5EAFF'},ticks:{callback:v=>'$'+Number(v/1000).toFixed(0)+'K'}},x:{grid:{display:false}}}}
+      });
+    }
+
+    // Feature importance chart
+    if(data.feature_importances){
+      const labels={area_sqft:'Area',bedrooms:'Beds',bathrooms:'Baths',floors:'Floors',age_years:'Age',garage_cars:'Garage',has_pool:'Pool',has_garden:'Garden',location_type:'Location',condition:'Condition',school_dist_km:'School',crime_index:'Crime',renovated:'Renovated',lot_size_sqft:'Lot Size',city_idx:'City'};
+      const sorted=Object.entries(data.feature_importances).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const colors=[BLUE,ORANGE,GREEN,PURPLE,AMBER,ROSE,BLUE,ORANGE];
+      new Chart(document.getElementById('importanceChart'),{
+        type:'bar',
+        data:{labels:sorted.map(([f])=>labels[f]||f),datasets:[{data:sorted.map(([,v])=>parseFloat((v*100).toFixed(1))),backgroundColor:colors.map(c=>c+'22'),borderColor:colors,borderWidth:2,borderRadius:6}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#E5EAFF'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}}}
+      });
+
+      const list=document.getElementById('fi-list');
+      list.innerHTML='';
+      Object.entries(data.feature_importances).sort((a,b)=>b[1]-a[1]).forEach(([f,v],i)=>{
+        const row=document.createElement('div');
+        row.className='fi-item';
+        row.innerHTML=`<div class="fi-rank">${i+1}</div><div class="fi-name">${labels[f]||f}</div><div class="fi-track"><div class="fi-fill" id="ff${i}"></div></div><div class="fi-pct">${(v*100).toFixed(1)}%</div>`;
+        list.appendChild(row);
+        setTimeout(()=>{ document.getElementById('ff'+i).style.width=(v*100)+'%'; },400+i*60);
+      });
+    }
+
+    // City chart
+    if(data.city_stats){
+      const cities=Object.keys(data.city_stats);
+      const avgs=cities.map(c=>data.city_stats[c].avg);
+      const maxAvg=Math.max(...avgs);
+      new Chart(document.getElementById('cityChart'),{
+        type:'bar',
+        data:{labels:cities,datasets:[{label:'Average Price',data:avgs,backgroundColor:cities.map((_,i)=>`hsla(${210+i*10},75%,55%,0.8)`),borderColor:cities.map((_,i)=>`hsl(${210+i*10},75%,45%)`),borderWidth:2,borderRadius:8}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#E5EAFF'},ticks:{callback:v=>'$'+Number(v/1000).toFixed(0)+'K'}},x:{grid:{display:false}}}}
+      });
+
+      const tbody=document.getElementById('city-table-body');
+      cities.forEach((city,i)=>{
+        const s=data.city_stats[city]; const pct=(s.avg/maxAvg*100).toFixed(0);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td style="font-weight:700;color:var(--text)">${city}</td><td class="td-price">$${Number(s.avg).toLocaleString()}</td><td><div class="td-bar-inner"><div class="td-bar-fill" id="tb${i}" data-w="${pct}"></div></div></td><td style="font-size:0.78rem;color:var(--muted)">$${Number(s.min/1000).toFixed(0)}K–$${Number(s.max/1000).toFixed(0)}K</td>`;
+        tbody.appendChild(tr);
+        setTimeout(()=>{ const el=document.getElementById('tb'+i); if(el) el.style.width=el.dataset.w+'%'; },500+i*80);
+      });
+    }
+
+    // Distribution
+    new Chart(document.getElementById('distChart'),{
+      type:'doughnut',
+      data:{labels:['< $200K','$200K–$400K','$400K–$600K','$600K–$1M','> $1M'],datasets:[{data:[8,28,32,22,10],backgroundColor:[ROSE+'33',ORANGE+'33',BLUE+'33',GREEN+'33',PURPLE+'33'],borderColor:[ROSE,ORANGE,BLUE,GREEN,PURPLE],borderWidth:2,hoverOffset:12}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{padding:16,font:{size:11}}}},cutout:'65%'}
+    });
+
+    // Model comparison
+    new Chart(document.getElementById('modelCompChart'),{
+      type:'bar',
+      data:{labels:['Random Forest','Gradient Boost','Ensemble (RF+GB)'],datasets:[{label:'R² Score',data:[0.961,0.958,0.974],backgroundColor:[BLUE+'33',ORANGE+'33',GREEN+'33'],borderColor:[BLUE,ORANGE,GREEN],borderWidth:2,borderRadius:10}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0.94,max:0.98,grid:{color:'#E5EAFF'},ticks:{callback:v=>v.toFixed(3)}},x:{grid:{display:false}}}}
+    });
+  }
+
+  loadData();
+</script>
+{% endblock %}

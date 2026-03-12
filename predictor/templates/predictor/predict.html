@@ -1,0 +1,500 @@
+{% extends 'predictor/base.html' %}
+{% block title %}Predict{% endblock %}
+{% block nav_predict %}active{% endblock %}
+
+{% block content %}
+<style>
+  .predict-hero {
+    padding: 52px 52px 32px; max-width: 1200px; margin: 0 auto; text-align: center;
+  }
+  @media(max-width:768px){.predict-hero{padding:36px 20px 24px;}}
+
+  .predict-layout {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 52px 80px;
+    display: grid; grid-template-columns: 1.1fr 0.9fr;
+    gap: 28px; align-items: start;
+  }
+  @media(max-width:900px){.predict-layout{grid-template-columns:1fr;padding:0 20px 60px;}}
+
+  /* Form card */
+  .form-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 22px; box-shadow: var(--shadow-md);
+    overflow: hidden; position: sticky; top: 88px;
+  }
+  .form-card-top {
+    background: linear-gradient(135deg, var(--blue2), var(--blue));
+    padding: 24px 28px 20px;
+  }
+  .form-card-title {
+    font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 800;
+    color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .form-tabs { display: flex; gap: 4px; }
+  .form-tab {
+    padding: 7px 18px; border-radius: 8px;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.2s;
+    background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7);
+    font-family: 'Nunito Sans', sans-serif;
+  }
+  .form-tab.active { background: #fff; color: var(--blue2); }
+
+  .progress-steps { display: flex; align-items: center; gap: 8px; padding: 16px 28px 0; }
+  .ps { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .ps.done   { background: var(--blue2); }
+  .ps.active { background: var(--orange); width: 24px; border-radius: 4px; }
+  .ps-line   { flex: 1; height: 1px; background: var(--border); }
+
+  .form-body { padding: 22px 28px 28px; }
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field.full { grid-column: 1/-1; }
+
+  label {
+    font-size: 0.72rem; font-weight: 700; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  label .label-val { color: var(--blue2); font-size: 0.85rem; }
+
+  input[type=range] {
+    width: 100%; height: 5px; -webkit-appearance: none;
+    background: linear-gradient(90deg, var(--blue2) 0%, var(--border) 0%);
+    border-radius: 3px; outline: none; cursor: pointer; border: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 17px; height: 17px;
+    background: var(--blue2); border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.4); cursor: pointer;
+  }
+
+  select {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 14px; color: var(--text);
+    font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem; outline: none; width: 100%;
+    transition: border-color 0.2s; cursor: pointer;
+  }
+  select:focus { border-color: var(--blue2); box-shadow: 0 0 0 3px var(--blue-light); }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 16px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--muted); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    font-family: 'Nunito Sans', sans-serif; transition: all 0.18s;
+  }
+  .chip.active { background: var(--blue-light); border-color: var(--blue2); color: var(--blue2); }
+
+  .btn-next {
+    flex: 1; padding: 12px;
+    background: var(--bg2); border: 1.5px solid var(--border);
+    border-radius: 10px; color: var(--text2);
+    font-weight: 700; font-size: 0.9rem; cursor: pointer;
+    font-family: 'Nunito Sans', sans-serif; transition: all 0.2s;
+  }
+  .btn-next:hover { background: var(--blue-light); border-color: var(--blue2); color: var(--blue2); }
+
+  .btn-predict {
+    flex: 2; padding: 12px;
+    background: linear-gradient(135deg, var(--orange2), var(--orange));
+    border: none; border-radius: 10px; color: #fff;
+    font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    font-family: 'Nunito Sans', sans-serif;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(234,108,0,0.35);
+  }
+  .btn-predict:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(234,108,0,0.45); }
+  .btn-predict:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .form-actions { display: flex; gap: 10px; margin-top: 22px; }
+
+  /* Results column */
+  .results-col { display: flex; flex-direction: column; gap: 20px; }
+
+  .price-hero {
+    background: linear-gradient(135deg, var(--blue2) 0%, var(--blue) 100%);
+    border-radius: 22px; padding: 36px; text-align: center;
+    box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+  }
+  .price-hero::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); pointer-events: none;
+  }
+  .price-hero-label { font-size: 0.72rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+  .price-hero-val {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4rem); font-weight: 800; color: #fff;
+    line-height: 1; opacity: 0; transform: scale(0.92);
+    transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .price-hero-val.show { opacity: 1; transform: scale(1); }
+
+  .placeholder-state { padding: 20px 0; }
+  .placeholder-house {
+    width: 80px; height: 80px; margin: 0 auto 16px;
+    background: rgba(255,255,255,0.12); border-radius: 50%;
+    display: grid; place-items: center;
+  }
+
+  .price-range { display: flex; justify-content: center; gap: 28px; margin-top: 14px; }
+  .price-range-item .r-label { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+  .price-range-item .r-val   { color: #fff; font-weight: 700; font-size: 0.9rem; }
+
+  .conf-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 0.78rem; color: #fff; font-weight: 600; margin-top: 12px;
+  }
+
+  /* Breakdown */
+  .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bk-item {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 12px 14px;
+    opacity: 0; transform: translateY(8px); transition: all 0.35s ease;
+  }
+  .bk-item.show { opacity: 1; transform: translateY(0); }
+  .bk-item .bk-name { font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .bk-item .bk-val  { font-size: 0.92rem; font-weight: 700; }
+  .bk-item .bk-val.pos { color: var(--green); }
+  .bk-item .bk-val.neg { color: var(--rose); }
+
+  /* Importance */
+  .imp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .imp-lbl  { font-size: 0.75rem; color: var(--text2); width: 110px; flex-shrink: 0; font-weight: 600; }
+  .imp-track{ flex: 1; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+  .imp-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--blue2), var(--orange2)); width: 0; transition: width 1s ease; }
+  .imp-pct  { font-size: 0.73rem; color: var(--orange); width: 36px; text-align: right; font-weight: 700; }
+
+  /* Metrics row */
+  .metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+  .m-cell { padding: 18px; text-align: center; border-right: 1px solid var(--border); }
+  .m-cell:last-child { border-right: none; }
+  .m-val { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 800; }
+  .m-lbl { font-size: 0.67rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+</style>
+
+<div class="predict-hero">
+  <div class="section-label">Price Predictor</div>
+  <h1 class="display-heading" style="font-size:clamp(2rem,4vw,3rem);margin-bottom:10px">
+    Enter property details for your<br><span class="blue-gradient">instant valuation</span>
+  </h1>
+  <p style="color:var(--muted);font-size:0.95rem">15 features · 12,000-sample model · 93% confidence</p>
+</div>
+
+<div class="predict-layout">
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-card-top">
+      <div class="form-card-title">
+        <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M8 8h8M8 16h5"/></svg>
+        Property Information
+      </div>
+      <div class="form-tabs">
+        <button class="form-tab active" onclick="showTab(0)">Basic</button>
+        <button class="form-tab"        onclick="showTab(1)">Amenities</button>
+        <button class="form-tab"        onclick="showTab(2)">Location</button>
+      </div>
+    </div>
+
+    <div class="progress-steps" id="progress-steps">
+      <div class="ps active" id="ps0"></div><div class="ps-line"></div>
+      <div class="ps" id="ps1"></div><div class="ps-line"></div>
+      <div class="ps" id="ps2"></div>
+    </div>
+
+    <div class="form-body">
+      <!-- TAB 0 -->
+      <div class="form-section active" id="tab0">
+        <div class="field-grid">
+          <div class="field full">
+            <label>Area (sq ft) <span class="label-val" id="area-v">1,800</span></label>
+            <input type="range" id="area_sqft" min="400" max="7500" value="1800" step="50" oninput="syncSlider(this,'area-v',true)">
+          </div>
+          <div class="field">
+            <label>Bedrooms</label>
+            <div class="chip-group" id="bed-grp">
+              <button class="chip" onclick="setChip('bed-grp','bedrooms',1)">1</button>
+              <button class="chip" onclick="setChip('bed-grp','bedrooms',2)">2</button>
+              <button class="chip active" onclick="setChip('bed-grp','bedrooms',3)">3</button>
+              <button class="chip" onclick="setChip('bed-grp','bedrooms',4)">4</button>
+              <button class="chip" onclick="setChip('bed-grp','bedrooms',5)">5+</button>
+            </div>
+            <input type="hidden" id="bedrooms" value="3">
+          </div>
+          <div class="field">
+            <label>Bathrooms</label>
+            <div class="chip-group" id="bath-grp">
+              <button class="chip" onclick="setChip('bath-grp','bathrooms',1)">1</button>
+              <button class="chip active" onclick="setChip('bath-grp','bathrooms',2)">2</button>
+              <button class="chip" onclick="setChip('bath-grp','bathrooms',3)">3</button>
+              <button class="chip" onclick="setChip('bath-grp','bathrooms',4)">4+</button>
+            </div>
+            <input type="hidden" id="bathrooms" value="2">
+          </div>
+          <div class="field">
+            <label>Floors <span class="label-val" id="floors-v">1</span></label>
+            <input type="range" id="floors" min="1" max="4" value="1" step="1" oninput="syncSlider(this,'floors-v')">
+          </div>
+          <div class="field">
+            <label>Lot Size (sq ft) <span class="label-val" id="lot-v">5,000</span></label>
+            <input type="range" id="lot_size_sqft" min="1000" max="20000" value="5000" step="500" oninput="syncSlider(this,'lot-v',true)">
+          </div>
+          <div class="field">
+            <label>Age (years) <span class="label-val" id="age-v">10</span></label>
+            <input type="range" id="age_years" min="0" max="80" value="10" step="1" oninput="syncSlider(this,'age-v')">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-next" onclick="showTab(1)">Next: Amenities</button>
+        </div>
+      </div>
+
+      <!-- TAB 1 -->
+      <div class="form-section" id="tab1">
+        <div class="field-grid">
+          <div class="field">
+            <label>Garage Cars <span class="label-val" id="garage-v">1</span></label>
+            <input type="range" id="garage_cars" min="0" max="4" value="1" step="1" oninput="syncSlider(this,'garage-v')">
+          </div>
+          <div class="field">
+            <label>Condition (1–5) <span class="label-val" id="cond-v">3</span></label>
+            <input type="range" id="condition" min="1" max="5" value="3" step="1" oninput="syncSlider(this,'cond-v')">
+          </div>
+          <div class="field">
+            <label>Swimming Pool</label>
+            <div class="chip-group" id="pool-grp">
+              <button class="chip active" onclick="setChip('pool-grp','has_pool',0)">No Pool</button>
+              <button class="chip"        onclick="setChip('pool-grp','has_pool',1)">Has Pool</button>
+            </div>
+            <input type="hidden" id="has_pool" value="0">
+          </div>
+          <div class="field">
+            <label>Garden / Yard</label>
+            <div class="chip-group" id="garden-grp">
+              <button class="chip active" onclick="setChip('garden-grp','has_garden',0)">No Garden</button>
+              <button class="chip"        onclick="setChip('garden-grp','has_garden',1)">Has Garden</button>
+            </div>
+            <input type="hidden" id="has_garden" value="0">
+          </div>
+          <div class="field">
+            <label>Renovated</label>
+            <div class="chip-group" id="ren-grp">
+              <button class="chip active" onclick="setChip('ren-grp','renovated',0)">Original</button>
+              <button class="chip"        onclick="setChip('ren-grp','renovated',1)">Renovated</button>
+            </div>
+            <input type="hidden" id="renovated" value="0">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-next" style="flex:0.7;color:var(--muted)" onclick="showTab(0)">Back</button>
+          <button class="btn-next" onclick="showTab(2)">Next: Location</button>
+        </div>
+      </div>
+
+      <!-- TAB 2 -->
+      <div class="form-section" id="tab2">
+        <div class="field-grid">
+          <div class="field full">
+            <label>City</label>
+            <select id="city_idx">
+              <option value="0">New York</option>
+              <option value="1">Los Angeles</option>
+              <option value="2">Chicago</option>
+              <option value="3">Houston</option>
+              <option value="4" selected>Phoenix</option>
+              <option value="5">Philadelphia</option>
+              <option value="6">San Antonio</option>
+              <option value="7">San Diego</option>
+              <option value="8">Dallas</option>
+              <option value="9">Austin</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Area Type</label>
+            <div class="chip-group" id="loc-grp">
+              <button class="chip" onclick="setChip('loc-grp','location_type','rural')">Rural</button>
+              <button class="chip active" onclick="setChip('loc-grp','location_type','suburb')">Suburban</button>
+              <button class="chip" onclick="setChip('loc-grp','location_type','city')">City Center</button>
+            </div>
+            <input type="hidden" id="location_type" value="suburb">
+          </div>
+          <div class="field">
+            <label>School Distance (km) <span class="label-val" id="school-v">2.0</span></label>
+            <input type="range" id="school_dist_km" min="0.1" max="12" value="2" step="0.1" oninput="syncSlider(this,'school-v',false,1)">
+          </div>
+          <div class="field">
+            <label>Crime Index (1–10) <span class="label-val" id="crime-v">3.0</span></label>
+            <input type="range" id="crime_index" min="0.5" max="10" value="3" step="0.1" oninput="syncSlider(this,'crime-v',false,1)">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-next" style="flex:0.7;color:var(--muted)" onclick="showTab(1)">Back</button>
+          <button class="btn-predict" id="predict-btn" onclick="runPredict()">Predict Price</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-col">
+    <div class="price-hero">
+      <div id="placeholder-state" class="placeholder-state">
+        <div class="placeholder-house">
+          <svg width="36" height="36" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        </div>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.92rem">Fill in details and click<br><strong style="color:#fff">Predict Price</strong> to see your estimate</div>
+      </div>
+      <div id="result-state" style="display:none">
+        <div class="price-hero-label">Estimated Market Value</div>
+        <div class="price-hero-val" id="price-val">$0</div>
+        <div class="conf-badge"><span class="dot-live"></span><span>93.4% Confidence</span></div>
+        <div class="price-range" id="price-range">
+          <div class="price-range-item"><div class="r-label">Low Estimate</div><div class="r-val" id="price-low">—</div></div>
+          <div class="price-range-item"><div class="r-label">High Estimate</div><div class="r-val" id="price-high">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="breakdown-card" style="display:none" class="glass-card">
+      <div style="padding:22px">
+        <div class="section-label" style="margin-bottom:14px">Price Breakdown</div>
+        <div class="breakdown-grid" id="breakdown-grid"></div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div style="padding:22px">
+        <div class="section-label" style="margin-bottom:14px">Feature Importance</div>
+        <div id="importance-container"><p style="color:var(--muted);font-size:0.82rem">Loading model insights...</p></div>
+      </div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="m-cell"><div class="m-val" style="color:var(--blue2)" id="m-r2">—</div><div class="m-lbl">R² Score</div></div>
+      <div class="m-cell"><div class="m-val" style="color:var(--orange)" id="m-mae">—</div><div class="m-lbl">MAE</div></div>
+      <div class="m-cell"><div class="m-val" style="color:var(--green)" id="m-rmse">—</div><div class="m-lbl">RMSE</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showTab(n) {
+    document.querySelectorAll('.form-section').forEach((s,i)=>s.classList.toggle('active',i===n));
+    document.querySelectorAll('.form-tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+    for(let i=0;i<3;i++){
+      const ps=document.getElementById('ps'+i);
+      if(i<n){ps.classList.add('done');ps.classList.remove('active');}
+      else if(i===n){ps.classList.add('active');ps.classList.remove('done');}
+      else{ps.classList.remove('done','active');}
+    }
+  }
+
+  function syncSlider(el, valId, commify=false, decimals=0) {
+    let v = parseFloat(el.value);
+    document.getElementById(valId).textContent = decimals>0 ? v.toFixed(decimals) : (commify ? Number(v).toLocaleString() : v);
+    const pct = ((v-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min)))*100;
+    el.style.background = `linear-gradient(90deg, var(--blue2) ${pct}%, var(--border) ${pct}%)`;
+  }
+
+  function setChip(groupId, fieldId, value) {
+    document.querySelectorAll(`#${groupId} .chip`).forEach(c=>c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(fieldId).value = value;
+  }
+
+  document.querySelectorAll('input[type=range]').forEach(el => {
+    const pct = ((parseFloat(el.value)-parseFloat(el.min))/(parseFloat(el.max)-parseFloat(el.min)))*100;
+    el.style.background = `linear-gradient(90deg, var(--blue2) ${pct}%, var(--border) ${pct}%)`;
+  });
+
+  async function runPredict() {
+    const btn = document.getElementById('predict-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+    const payload = {
+      area_sqft:+document.getElementById('area_sqft').value,
+      bedrooms:+document.getElementById('bedrooms').value,
+      bathrooms:+document.getElementById('bathrooms').value,
+      floors:+document.getElementById('floors').value,
+      age_years:+document.getElementById('age_years').value,
+      garage_cars:+document.getElementById('garage_cars').value,
+      has_pool:+document.getElementById('has_pool').value,
+      has_garden:+document.getElementById('has_garden').value,
+      location_type:document.getElementById('location_type').value,
+      condition:+document.getElementById('condition').value,
+      school_dist_km:+document.getElementById('school_dist_km').value,
+      crime_index:+document.getElementById('crime_index').value,
+      renovated:+document.getElementById('renovated').value,
+      lot_size_sqft:+document.getElementById('lot_size_sqft').value,
+      city_idx:+document.getElementById('city_idx').value,
+    };
+    try {
+      const res = await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+      showResult(data);
+    } catch(e){ alert('Error: '+e.message+'\n\nMake sure you ran train_model.py first!'); }
+    finally{ btn.disabled=false; btn.innerHTML='Predict Price'; }
+  }
+
+  function showResult(data) {
+    document.getElementById('placeholder-state').style.display='none';
+    document.getElementById('result-state').style.display='block';
+    const pv=document.getElementById('price-val');
+    pv.textContent=data.formatted;
+    setTimeout(()=>pv.classList.add('show'),50);
+    document.getElementById('price-low').textContent=data.range_low;
+    document.getElementById('price-high').textContent=data.range_high;
+    if(data.metrics){
+      document.getElementById('m-r2').textContent=data.metrics.r2;
+      document.getElementById('m-mae').textContent='$'+Number(data.metrics.mae).toLocaleString();
+      document.getElementById('m-rmse').textContent='$'+Number(data.metrics.rmse).toLocaleString();
+    }
+    const bg=document.getElementById('breakdown-grid');
+    bg.innerHTML='';
+    document.getElementById('breakdown-card').style.display='block';
+    Object.entries(data.breakdown).forEach(([name,val],i)=>{
+      const d=document.createElement('div');
+      d.className='bk-item';
+      d.innerHTML=`<div class="bk-name">${name}</div><div class="bk-val ${val>=0?'pos':'neg'}">${val>=0?'+':'-'}$${Math.abs(val).toLocaleString()}</div>`;
+      bg.appendChild(d);
+      setTimeout(()=>d.classList.add('show'),i*60);
+    });
+  }
+
+  async function loadImportances() {
+    try {
+      const res=await fetch('/api/metrics');
+      const data=await res.json();
+      if(!data.feature_importances) return;
+      const labels={area_sqft:'Area',bedrooms:'Bedrooms',bathrooms:'Bathrooms',floors:'Floors',age_years:'Age',garage_cars:'Garage',has_pool:'Pool',has_garden:'Garden',location_type:'Location',condition:'Condition',school_dist_km:'School',crime_index:'Crime',renovated:'Renovated',lot_size_sqft:'Lot Size',city_idx:'City'};
+      const sorted=Object.entries(data.feature_importances).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      const cont=document.getElementById('importance-container');
+      cont.innerHTML='';
+      sorted.forEach(([f,v],i)=>{
+        const row=document.createElement('div');
+        row.className='imp-row';
+        row.innerHTML=`<span class="imp-lbl">${labels[f]||f}</span><div class="imp-track"><div class="imp-fill" id="if${i}"></div></div><span class="imp-pct">${(v*100).toFixed(1)}%</span>`;
+        cont.appendChild(row);
+        setTimeout(()=>{ document.getElementById('if'+i).style.width=(v*100)+'%'; },300+i*80);
+      });
+      if(data.metrics){
+        document.getElementById('m-r2').textContent=data.metrics.r2;
+        document.getElementById('m-mae').textContent='$'+Number(data.metrics.mae).toLocaleString();
+        document.getElementById('m-rmse').textContent='$'+Number(data.metrics.rmse).toLocaleString();
+      }
+    } catch(e){
+      document.getElementById('importance-container').innerHTML='<p style="color:var(--muted);font-size:0.82rem">Run train_model.py to load model data</p>';
+    }
+  }
+  loadImportances();
+</script>
+{% endblock %}

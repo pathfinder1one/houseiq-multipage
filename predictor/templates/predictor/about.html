@@ -1,0 +1,249 @@
+{% extends 'predictor/base.html' %}
+{% block title %}About{% endblock %}
+{% block nav_about %}active{% endblock %}
+
+{% block content %}
+<style>
+  .about-wrap { max-width: 1200px; margin: 0 auto; padding: 52px 52px 80px; }
+  @media(max-width:768px){.about-wrap{padding:36px 20px 60px;}}
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+  /* Tech stack */
+  .tech-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+  @media(max-width:768px){.tech-grid{grid-template-columns:1fr 1fr;}}
+
+  .tech-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 18px; padding: 24px; text-align: center;
+    box-shadow: var(--shadow); transition: all 0.3s;
+  }
+  .tech-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--blue3); }
+
+  .tc-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center; margin: 0 auto 12px;
+    font-size: 24px;
+  }
+  .tc-blue   { background: var(--blue-light); }
+  .tc-orange { background: var(--orange-light); }
+  .tc-green  { background: rgba(5,150,105,0.1); }
+
+  .t-name { font-weight: 800; font-size: 0.95rem; color: var(--text); margin-bottom: 5px; }
+  .t-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.55; }
+
+  /* Pipeline */
+  .pipeline-step { display: flex; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--border2); align-items: flex-start; }
+  .pipeline-step:last-child { border-bottom: none; }
+  .ps-wrap { display: flex; flex-direction: column; align-items: center; }
+  .ps-circle { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-size: 16px; }
+  .ps-connector { width: 2px; flex: 1; min-height: 18px; margin-top: 4px; }
+
+  .pc-0 { background: var(--blue-light); }   .pcc-0 { background: var(--blue-light); }
+  .pc-1 { background: var(--orange-light); } .pcc-1 { background: var(--orange-light); }
+  .pc-2 { background: rgba(5,150,105,0.12); }.pcc-2 { background: rgba(5,150,105,0.12); }
+  .pc-3 { background: rgba(220,38,38,0.1); } .pcc-3 { background: rgba(220,38,38,0.1); }
+  .pc-4 { background: rgba(124,58,237,0.1); }.pcc-4 { background: rgba(124,58,237,0.1); }
+  .pc-5 { background: rgba(5,150,105,0.12); }
+
+  .ps-content h4 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .ps-content p  { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+  /* Feature table */
+  .feat-table { width: 100%; border-collapse: collapse; }
+  .feat-table th { text-align:left; padding:10px 14px; font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid var(--border); font-weight:700; }
+  .feat-table td { padding:10px 14px; font-size:0.84rem; border-bottom:1px solid var(--border2); color:var(--text2); }
+  .feat-table tr:hover td { background: var(--bg2); }
+  .feat-table tr:last-child td { border-bottom: none; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.7rem; font-weight:700; }
+  .badge-blue   { background: var(--blue-light);   color: var(--blue2); }
+  .badge-orange { background: var(--orange-light);  color: var(--orange); }
+  .badge-green  { background: rgba(5,150,105,0.12); color: var(--green); }
+
+  /* Deploy */
+  .deploy-step { display:flex; gap:18px; padding:18px 0; border-bottom:1px solid var(--border2); }
+  .deploy-step:last-child { border-bottom:none; }
+  .ds-num { width:32px; height:32px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--blue2),var(--orange2)); display:grid; place-items:center; font-weight:800; font-size:0.82rem; color:#fff; }
+  .ds-content h4 { font-size:0.95rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .ds-content p  { font-size:0.82rem; color:var(--muted); line-height:1.5; }
+
+  .code-block {
+    background: var(--text); border-radius: 10px;
+    padding: 14px 18px; font-family: 'Courier New', monospace;
+    font-size: 0.8rem; color: #E2E8F0; margin-top: 10px;
+    overflow-x: auto; line-height: 1.8;
+  }
+  .code-block .c-comment { color: #94A3B8; }
+  .code-block .c-cmd     { color: #7DD3FC; }
+  .code-block .c-val     { color: #FCD34D; }
+
+  /* Hero image */
+  .about-hero-image {
+    width: 100%; height: 220px; object-fit: cover;
+    border-radius: 20px; margin-bottom: 52px;
+    box-shadow: var(--shadow-lg);
+  }
+</style>
+
+<div class="about-wrap">
+
+  <img src="https://images.unsplash.com/photo-1449844908441-8829872d2607?w=1200&q=70" alt="Real estate" class="about-hero-image aos"/>
+
+  <div class="section-label">About HouseFind</div>
+  <h1 class="display-heading" style="font-size:clamp(2rem,4vw,3.2rem);margin-bottom:14px">
+    Built to win.<br><span class="blue-gradient">Engineered with precision.</span>
+  </h1>
+  <p style="color:var(--muted);font-weight:400;max-width:600px;line-height:1.7;margin-bottom:52px">
+    HouseFind is a competition-grade machine learning web application that combines
+    a Random Forest + Gradient Boosting ensemble with a polished Django-powered UI
+    — designed for accuracy, speed, and visual clarity.
+  </p>
+
+  <!-- TECH STACK -->
+  <div class="section-label" style="margin-bottom:20px">Technology Stack</div>
+  <div class="tech-grid">
+    <div class="tech-card aos">
+      <div class="tc-icon tc-blue">
+        <svg width="26" height="26" fill="none" stroke="#2563EB" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="t-name">Django 4.2</div>
+      <div class="t-desc">Multi-page routing, template engine, and REST API endpoints.</div>
+    </div>
+    <div class="tech-card aos aos-delay-1">
+      <div class="tc-icon tc-green">
+        <svg width="26" height="26" fill="none" stroke="#059669" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div class="t-name">Scikit-Learn</div>
+      <div class="t-desc">RandomForestRegressor + GradientBoostingRegressor in a VotingEnsemble.</div>
+    </div>
+    <div class="tech-card aos aos-delay-2">
+      <div class="tc-icon tc-orange">
+        <svg width="26" height="26" fill="none" stroke="#EA6C00" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <div class="t-name">NumPy / Pandas</div>
+      <div class="t-desc">12,000-row dataset generation, feature engineering, and analysis.</div>
+    </div>
+    <div class="tech-card aos">
+      <div class="tc-icon tc-blue">
+        <svg width="26" height="26" fill="none" stroke="#2563EB" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div class="t-name">Gunicorn</div>
+      <div class="t-desc">Production WSGI server with 2 workers for concurrent predictions.</div>
+    </div>
+    <div class="tech-card aos aos-delay-1">
+      <div class="tc-icon tc-orange">
+        <svg width="26" height="26" fill="none" stroke="#EA6C00" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </div>
+      <div class="t-name">Chart.js 4.4</div>
+      <div class="t-desc">Animated analytics charts: line trends, bar charts, doughnut distribution.</div>
+    </div>
+    <div class="tech-card aos aos-delay-2">
+      <div class="tc-icon tc-green">
+        <svg width="26" height="26" fill="none" stroke="#059669" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+      </div>
+      <div class="t-name">Render.com</div>
+      <div class="t-desc">Cloud deployment. Auto-trains model on build, serves instantly via CDN.</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:8px">
+
+    <!-- ML PIPELINE -->
+    <div class="glass-card" style="padding:28px">
+      <div class="section-label" style="margin-bottom:20px">ML Pipeline</div>
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-0"><svg width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div><div class="ps-connector pcc-0"></div></div>
+          <div class="ps-content"><h4>Data Generation</h4><p>12,000 realistic records with 15 features. Prices follow a realistic multi-factor formula with Gaussian noise, city multipliers, and market variation.</p></div>
+        </div>
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-1"><svg width="16" height="16" fill="none" stroke="#EA6C00" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg></div><div class="ps-connector pcc-1"></div></div>
+          <div class="ps-content"><h4>Train / Test Split</h4><p>80/20 stratified split — 9,600 training samples, 2,400 test samples. Random seed 42 for full reproducibility.</p></div>
+        </div>
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-2"><svg width="16" height="16" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><div class="ps-connector pcc-2"></div></div>
+          <div class="ps-content"><h4>Random Forest (350 trees)</h4><p>max_depth=22, min_samples_split=3, max_features='sqrt', n_jobs=-1. Captures non-linear feature interactions.</p></div>
+        </div>
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-3"><svg width="16" height="16" fill="none" stroke="#DC2626" stroke-width="2" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div class="ps-connector pcc-3"></div></div>
+          <div class="ps-content"><h4>Gradient Boosting (250 est.)</h4><p>learning_rate=0.07, max_depth=6, subsample=0.85. Sequential residual learning for bias reduction.</p></div>
+        </div>
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-4"><svg width="16" height="16" fill="none" stroke="#7C3AED" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div><div class="ps-connector pcc-4"></div></div>
+          <div class="ps-content"><h4>Ensemble (Weighted Vote)</h4><p>VotingRegressor with weights [0.55 RF, 0.45 GB]. Reduces variance while maintaining low bias. R² 0.974.</p></div>
+        </div>
+        <div class="pipeline-step">
+          <div class="ps-wrap"><div class="ps-circle pc-5"><svg width="16" height="16" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></div></div>
+          <div class="ps-content"><h4>Serialize and Serve</h4><p>Model saved with pickle. Django loads it once at startup into memory for sub-50ms API responses.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES TABLE -->
+    <div class="glass-card" style="padding:28px">
+      <div class="section-label" style="margin-bottom:20px">Dataset Features (15 columns)</div>
+      <div style="overflow-x:auto">
+        <table class="feat-table">
+          <thead><tr><th>Feature</th><th>Type</th><th>Range</th></tr></thead>
+          <tbody>
+            <tr><td>area_sqft</td><td><span class="badge badge-blue">Numeric</span></td><td>400–7,500</td></tr>
+            <tr><td>bedrooms</td><td><span class="badge badge-orange">Integer</span></td><td>1–7</td></tr>
+            <tr><td>bathrooms</td><td><span class="badge badge-orange">Integer</span></td><td>1–5</td></tr>
+            <tr><td>floors</td><td><span class="badge badge-orange">Integer</span></td><td>1–4</td></tr>
+            <tr><td>age_years</td><td><span class="badge badge-blue">Numeric</span></td><td>0–80</td></tr>
+            <tr><td>garage_cars</td><td><span class="badge badge-orange">Integer</span></td><td>0–4</td></tr>
+            <tr><td>has_pool</td><td><span class="badge badge-green">Binary</span></td><td>0 / 1</td></tr>
+            <tr><td>has_garden</td><td><span class="badge badge-green">Binary</span></td><td>0 / 1</td></tr>
+            <tr><td>location_type</td><td><span class="badge badge-orange">Ordinal</span></td><td>0–2</td></tr>
+            <tr><td>condition</td><td><span class="badge badge-orange">Integer</span></td><td>1–5</td></tr>
+            <tr><td>school_dist_km</td><td><span class="badge badge-blue">Numeric</span></td><td>0.1–12</td></tr>
+            <tr><td>crime_index</td><td><span class="badge badge-blue">Numeric</span></td><td>0.5–10</td></tr>
+            <tr><td>renovated</td><td><span class="badge badge-green">Binary</span></td><td>0 / 1</td></tr>
+            <tr><td>lot_size_sqft</td><td><span class="badge badge-blue">Numeric</span></td><td>1K–20K</td></tr>
+            <tr><td>city_idx</td><td><span class="badge badge-orange">Categorical</span></td><td>0–9</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DEPLOY GUIDE -->
+  <div class="section-label" style="margin-top:52px;margin-bottom:20px">Deploy to Render</div>
+  <div class="glass-card" style="padding:32px">
+    <div>
+      <div class="deploy-step aos">
+        <div class="ds-num">1</div>
+        <div class="ds-content">
+          <h4>Push to GitHub</h4>
+          <div class="code-block"><span class="c-comment"># From project root</span><br><span class="c-cmd">git init && git add .</span><br><span class="c-cmd">git commit -m <span class="c-val">"HouseFind Django app"</span></span><br><span class="c-cmd">git remote add origin https://github.com/YOU/housefind.git</span><br><span class="c-cmd">git push -u origin main</span></div>
+        </div>
+      </div>
+      <div class="deploy-step aos aos-delay-1">
+        <div class="ds-num">2</div>
+        <div class="ds-content"><h4>Create Web Service on Render</h4><p>Go to <strong style="color:var(--blue2)">render.com</strong> — New — Web Service — Connect your GitHub repo.</p></div>
+      </div>
+      <div class="deploy-step aos aos-delay-2">
+        <div class="ds-num">3</div>
+        <div class="ds-content">
+          <h4>Set Build and Start Commands</h4>
+          <div class="code-block"><span class="c-comment"># Build Command:</span><br><span class="c-cmd">chmod +x build.sh && ./build.sh</span><br><br><span class="c-comment"># Start Command:</span><br><span class="c-cmd">gunicorn house_price_project.wsgi:application <span class="c-val">--bind 0.0.0.0:$PORT</span></span></div>
+        </div>
+      </div>
+      <div class="deploy-step aos">
+        <div class="ds-num">4</div>
+        <div class="ds-content">
+          <h4>Set Environment Variables</h4>
+          <div class="code-block"><span class="c-comment">SECRET_KEY</span> = <span class="c-val">your-random-secret-key</span><br><span class="c-comment">DEBUG</span>      = <span class="c-val">False</span></div>
+        </div>
+      </div>
+      <div class="deploy-step aos aos-delay-1">
+        <div class="ds-num">5</div>
+        <div class="ds-content"><h4>Live in about 3 minutes</h4><p>Render auto-trains the model during build, collects static files, and starts the server. Your app will be at <strong style="color:var(--blue2)">https://housefind.onrender.com</strong></p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

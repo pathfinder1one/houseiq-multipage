@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}HouseFind{% endblock %} — AI Real Estate Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,500;6..12,600;6..12,700&display=swap" rel="stylesheet"/>
+  {% load static %}
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #1A4DB3;
+      --blue2:      #2563EB;
+      --blue3:      #3B82F6;
+      --blue-light: #DBEAFE;
+      --orange:     #EA6C00;
+      --orange2:    #F97316;
+      --orange-light: #FEF3E2;
+      --bg:         #F4F7FF;
+      --bg2:        #EBF1FF;
+      --white:      #FFFFFF;
+      --card:       #FFFFFF;
+      --text:       #0F1C3F;
+      --text2:      #374151;
+      --muted:      #6B7280;
+      --border:     #D1DCFF;
+      --border2:    #E5EAFF;
+      --shadow:     0 2px 16px rgba(26,77,179,0.10);
+      --shadow-md:  0 6px 32px rgba(26,77,179,0.14);
+      --shadow-lg:  0 16px 56px rgba(26,77,179,0.16);
+      --green:      #059669;
+      --rose:       #DC2626;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Warm light background mesh */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 0%   0%,   rgba(59,130,246,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 45% at 100% 100%, rgba(234,108,0,0.07)  0%, transparent 55%),
+        radial-gradient(ellipse 40% 35% at 50%  50%,  rgba(255,255,255,0.6) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Subtle dot grid */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: radial-gradient(circle, rgba(59,130,246,0.18) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 52px; height: 72px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 20px rgba(26,77,179,0.07);
+    }
+
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(234,108,0,0.2)); }
+    .nav-logo-name { font-family: 'Playfair Display', serif; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.3px; }
+    .nav-logo-name .house { color: var(--blue2); }
+    .nav-logo-name .find  { color: var(--orange); }
+
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+
+    .nav-link {
+      text-decoration: none; color: var(--muted); font-size: 0.88rem; font-weight: 600;
+      padding: 8px 18px; border-radius: 8px; transition: all 0.2s; letter-spacing: 0.2px;
+    }
+    .nav-link:hover  { color: var(--blue2); background: var(--blue-light); }
+    .nav-link.active { color: var(--blue2); background: var(--blue-light); font-weight: 700; }
+
+    .nav-cta {
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--orange2), var(--orange));
+      color: #fff; font-weight: 700; font-size: 0.85rem;
+      padding: 10px 24px; border-radius: 10px; margin-left: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(234,108,0,0.35);
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(234,108,0,0.45); }
+
+    main { position: relative; z-index: 1; padding-top: 72px; min-height: 100vh; }
+
+    .section    { padding: 80px 52px; max-width: 1200px; margin: 0 auto; }
+    .section-sm { padding: 50px 52px; max-width: 1200px; margin: 0 auto; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .section, .section-sm { padding: 50px 20px; }
+    }
+
+    /* ── Cards ── */
+    .glass-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: ''; display: block; height: 3px;
+      background: linear-gradient(90deg, var(--blue2), var(--orange2), var(--blue3));
+    }
+
+    /* ── Typography ── */
+    .display-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800; line-height: 1.05;
+      letter-spacing: -1.5px; color: var(--text);
+    }
+
+    .blue-gradient {
+      background: linear-gradient(120deg, var(--blue2) 0%, var(--blue3) 50%, var(--orange) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--orange);
+      background: var(--orange-light); border: 1px solid rgba(234,108,0,0.25);
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 20px;
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--orange2), var(--orange));
+      color: #fff; font-weight: 700; font-size: 0.95rem;
+      padding: 14px 34px; border-radius: 12px;
+      text-decoration: none; border: none; cursor: pointer;
+      font-family: 'Nunito Sans', sans-serif;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(234,108,0,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(234,108,0,0.45); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--white); color: var(--blue2); font-weight: 700; font-size: 0.95rem;
+      padding: 13px 32px; border-radius: 12px; text-decoration: none; cursor: pointer;
+      font-family: 'Nunito Sans', sans-serif;
+      border: 2px solid var(--blue2); transition: all 0.2s;
+      box-shadow: var(--shadow);
+    }
+    .btn-secondary:hover { background: var(--blue-light); box-shadow: var(--shadow-md); }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 1; padding: 36px 52px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--white);
+      flex-wrap: wrap; gap: 16px;
+      box-shadow: 0 -2px 20px rgba(26,77,179,0.06);
+    }
+
+    .footer-logo { display: flex; align-items: center; gap: 10px; }
+    .footer-logo img { height: 32px; width: auto; }
+    .footer-logo-name { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 800; }
+    .footer-logo-name .house { color: var(--blue2); }
+    .footer-logo-name .find  { color: var(--orange); }
+    .footer-text { color: var(--muted); font-size: 0.8rem; }
+
+    /* ── Shared utilities ── */
+    .aos { opacity: 0; transform: translateY(24px); transition: all 0.6s ease; }
+    .aos.visible { opacity: 1; transform: translateY(0); }
+    .aos-delay-1 { transition-delay: 0.1s; }
+    .aos-delay-2 { transition-delay: 0.2s; }
+    .aos-delay-3 { transition-delay: 0.3s; }
+    .aos-delay-4 { transition-delay: 0.4s; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(234,108,0,0.25); border-top-color: var(--orange);
+      border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .dot-live {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); animation: blink 2s infinite; display: inline-block;
+    }
+    @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.65)} }
+
+    /* ── Card hover ── */
+    .hover-lift { transition: transform 0.3s, box-shadow 0.3s; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="{% static 'predictor/img/logo.png' %}" alt="HouseFind Logo"/>
+    <span class="nav-logo-name"><span class="house">House</span><span class="find">Find</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="/"           class="nav-link {% block nav_home %}{% endblock %}">Home</a>
+    <a href="/predict/"   class="nav-link {% block nav_predict %}{% endblock %}">Predict</a>
+    <a href="/analytics/" class="nav-link {% block nav_analytics %}{% endblock %}">Analytics</a>
+    <a href="/about/"     class="nav-link {% block nav_about %}{% endblock %}">About</a>
+    <a href="/predict/"   class="nav-cta">Get Estimate</a>
+  </div>
+</nav>
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  <div class="footer-logo">
+    <img src="{% static 'predictor/img/logo.png' %}" alt="HouseFind"/>
+    <span class="footer-logo-name"><span class="house">House</span><span class="find">Find</span></span>
+  </div>
+  <span class="footer-text">Random Forest Ensemble &nbsp;·&nbsp; 12,000+ Training Samples &nbsp;·&nbsp; 15 Features &nbsp;·&nbsp; R² 97%+</span>
+  <span class="footer-text">© 2024 HouseFind &nbsp;·&nbsp; Built for Competition</span>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.aos').forEach(el => observer.observe(el));
+
+  const path = window.location.pathname;
+  document.querySelectorAll('.nav-link').forEach(a => {
+    const href = a.getAttribute('href');
+    if (href === '/' && path === '/') a.classList.add('active');
+    else if (href !== '/' && path.startsWith(href)) a.classList.add('active');
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

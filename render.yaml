@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: houseiq-predictor
+    env: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn house_price_project.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: house_price_project.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+    healthCheckPath: /
